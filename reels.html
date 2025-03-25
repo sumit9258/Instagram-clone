@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram UI Clone</title>
+    <link rel="shortcut icon" href="asset/favicon.svg" type="image/x-icon" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="text-white flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-1/4 text-black p-4 hidden md:block border-r border-gray-700">
+        <h1 class="text-2xl font-bold mb-6 flex items-center">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Logo" class="w-6 h-6 mr-2"> Instagram
+        </h1>
+        <ul class="space-y-6">
+            <a href="index.html"><li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i> <span>Home</span></li></a>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-search text-xl"></i> <span>Search</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i> <span>Explore</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i> <span>Reels</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-comment-dots text-xl"></i> <span>Messages</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-heart text-xl"></i> <span>Notifications</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-plus-square text-xl"></i> <span>Create</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i> <span>Profile</span></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex items-center justify-center overflow-hidden">
+        <!-- Reels Section -->
+        <div id="reelsContainer" class="space-y-4 overflow-y-auto h-full w-full max-w-md snap-y snap-mandatory"></div>
+    </div>
+
+    <script>
+        // Video data
+        const videos = [
+            { type: 'video', src: 'asset/Ringing in the New Year with laughter, joy, and unforgettable memories at Skillyards! 🎉✨ - SkillYards (720p, h264).mp4' },
+            { type: 'video', src: 'asset/🎉 Happy Birthday, Pratik Sir! Wishing you a day filled with joy and laughter. - SkillYards (720p, h264).mp4' }
+        ];
+
+        // Store video data in localStorage
+        localStorage.setItem('reels', JSON.stringify(videos));
+
+        const reelsContainer = document.getElementById('reelsContainer');
+        const storedReels = JSON.parse(localStorage.getItem('reels')) || [];
+        const likedReels = JSON.parse(localStorage.getItem('likedReels')) || {};
+        let likeCounts = JSON.parse(localStorage.getItem('likeCounts')) || Array(storedReels.length).fill(0);
+
+        // Ensure all reels have a like count (default 0)
+        if (likeCounts.length !== storedReels.length) {
+            likeCounts = Array(storedReels.length).fill(0);
+        }
+
+        // Render reels
+        storedReels.forEach((reel, index) => {
+            const reelDiv = document.createElement('div');
+            reelDiv.className = 'relative h-full flex items-center justify-center snap-center';
+
+            // Reel HTML
+            reelDiv.innerHTML = `
+                <video id="video-${index}" class="reel w-full h-full object-cover rounded-lg">
+                    <source src="${reel.src}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <button onclick="togglePlayPause(${index})" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 hover:opacity-100 transition-opacity">
+                    <i class="fas fa-pause text-4xl text-white"></i>
+                </button>
+                <div class="absolute right-4 flex flex-col space-y-4 items-center text-white">
+                    <i id="like-${index}" onclick="toggleLike(${index})" class="fas fa-heart text-2xl cursor-pointer ${likedReels[index] ? 'text-red-500' : 'text-white'}"></i>
+                    <span id="like-count-${index}" class="text-sm">${likeCounts[index]}</span>
+                    <i class="fas fa-comment text-2xl cursor-pointer"></i>
+                    <i class="fas fa-share text-2xl cursor-pointer"></i>
+                </div>
+            `;
+            reelsContainer.appendChild(reelDiv);
+        });
+
+        // Play/Pause toggle
+        function togglePlayPause(index) {
+            const video = document.getElementById(`video-${index}`);
+            video.paused ? video.play() : video.pause();
+        }
+
+        // Like toggle with 0 and 1 behavior
+        function toggleLike(index) {
+            const likeIcon = document.getElementById(`like-${index}`);
+            const likeCount = document.getElementById(`like-count-${index}`);
+
+            if (likedReels[index]) {
+                // Unlike the reel
+                likedReels[index] = false;
+                likeCounts[index] = 0; // Set like count to 0
+                likeIcon.classList.remove('text-red-500');
+                likeIcon.classList.add('text-white');
+            } else {
+                // Like the reel
+                likedReels[index] = true;
+                likeCounts[index] = 1; // Set like count to 1
+                likeIcon.classList.add('text-red-500');
+                likeIcon.classList.remove('text-white');
+            }
+
+            // Update localStorage
+            localStorage.setItem('likedReels', JSON.stringify(likedReels));
+            localStorage.setItem('likeCounts', JSON.stringify(likeCounts));
+
+            // Update UI
+            likeCount.textContent = likeCounts[index];
+        }
+
+        // Automatic play/pause on scroll with more scroll required to switch
+        function checkReels() {
+            const reels = document.querySelectorAll('.reel');
+            const threshold = 0.6; // Scroll more before switching
+            reels.forEach(reel => {
+                const rect = reel.getBoundingClientRect();
+                const inView = rect.top >= 0 && rect.bottom <= window.innerHeight * (1 + threshold);
+                if (reel.tagName === 'VIDEO') {
+                    inView ? reel.play() : reel.pause();
+                }
+            });
+        }
+
+        reelsContainer.addEventListener('scroll', checkReels);
+        window.addEventListener('load', checkReels);
+    </script>
+</body>
+</html>
