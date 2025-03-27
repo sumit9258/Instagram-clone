@@ -163,7 +163,7 @@ function deleteComment(postImageKey, commentIndex) {
     }
 }
 
-// Modify addPostToUI function to add comment modal trigger
+// Function to add comment functionality to post
 function enhancePostWithComments(post, newPostDiv) {
     // Find comment button
     const commentButton = newPostDiv.querySelector('.fa-comment');
@@ -173,16 +173,35 @@ function enhancePostWithComments(post, newPostDiv) {
     });
 }
 
-// Modify the existing loadStoredPosts to use new comment enhancement
+// Function to load posts from storage
 function loadStoredPosts() {
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
 
-    // Existing default posts loading logic...
     const defaultPosts = [
-        // ... (keep your existing default posts)
+        {
+            user: "user1",
+            userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+            postImage: "https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg",
+            likes: 42,
+            comments: "Be the first to comment",
+            storedComments: []
+        },
+        {
+            user: "user2",
+            userImage: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg",
+            postImage: "https://images.pexels.com/photos/126407/pexels-photo-126407.jpeg",
+            likes: 128,
+            comments: "Be the first to comment",
+            storedComments: []
+        }
     ];
 
-    // Existing post adding logic remains the same
+    // If no posts in storage, use default posts
+    if (posts.length === 0) {
+        posts = defaultPosts;
+        localStorage.setItem("posts", JSON.stringify(posts));
+    }
+
     const postsContainer = document.getElementById("postsContainer");
     postsContainer.innerHTML = "";
     
@@ -197,7 +216,7 @@ function loadStoredPosts() {
     });
 }
 
-// Modify addPostToUI to include comments count
+// Function to add post to UI
 function addPostToUI(post) {
     const postsContainer = document.getElementById("postsContainer");
 
@@ -220,22 +239,56 @@ function addPostToUI(post) {
         <p class="px-4 text-sm text-gray-400 comments-count">${post.comments}</p>
     `;
 
-    // Existing event listeners...
+    // Add double-click event listener to the post image
     const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
-    postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
+    postImage.addEventListener('dblclick', () => {
+        // Find the like button and trigger a click
+        const likeButton = newPostDiv.querySelector('.fa-heart');
+        likeButton.click();
+    });
 
+    // Add click event listener to the like button
     const likeButton = newPostDiv.querySelector('.fa-heart');
-    likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
+    likeButton.addEventListener('click', () => {
+        // Toggle like status
+        const isLiked = likeButton.classList.contains('fas');
+        
+        if (isLiked) {
+            likeButton.classList.remove('fas');
+            likeButton.classList.add('far');
+            likeButton.style.color = '';
+            post.likes--;
+        } else {
+            likeButton.classList.remove('far');
+            likeButton.classList.add('fas');
+            likeButton.style.color = 'red';
+            post.likes++;
+        }
+        
+        // Update like count display
+        newPostDiv.querySelector('.like-count').textContent = `${post.likes} likes`;
+        
+        // Update in localStorage
+        updatePostInStorage(post);
+    });
 
     postsContainer.prepend(newPostDiv);
     
     return newPostDiv;
 }
 
-// Ensure compatibility with existing code
-document.addEventListener("DOMContentLoaded", loadStoredPosts);
+// Function to update post in localStorage
+function updatePostInStorage(updatedPost) {
+    let posts = JSON.parse(localStorage.getItem("posts")) || [];
+    const postIndex = posts.findIndex(p => p.postImage === updatedPost.postImage);
+    
+    if (postIndex !== -1) {
+        posts[postIndex] = updatedPost;
+        localStorage.setItem("posts", JSON.stringify(posts));
+    }
+}
 
-
+// Function to upload image
 function uploadImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -261,3 +314,6 @@ function uploadImage(event) {
     };
     reader.readAsDataURL(file);
 }
+
+// Initialize when DOM is loaded
+document.addEventListener("DOMContentLoaded", loadStoredPosts);
