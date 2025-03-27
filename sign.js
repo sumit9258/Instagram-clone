@@ -12,7 +12,7 @@ document.getElementById("loginForm").addEventListener("submit", function(event) 
         // Agar pehle se credentials stored hain, toh match karein
         if (username === storedUsername && password === storedPassword) {
             // alert("Login Successful!");
-            window.location.href = "index.html"; // Redirect after login
+            window.location.href = "home.html"; // Redirect after login
         } else {
             alert("Invalid Credentials! Please try again.");
         }
@@ -21,6 +21,6 @@ document.getElementById("loginForm").addEventListener("submit", function(event) 
         localStorage.setItem("username", username);
         localStorage.setItem("password", password);
         alert("Account Created & Login Successful!");
-        window.location.href = "dashboard.html";
+        window.location.href = "home.html";
     }
 });

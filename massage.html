@@ -6,84 +6,197 @@
     <title>Instagram UI Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Custom styles for stories */
+        #storiesContainer {
+            display: flex;
+            padding: 16px 0;
+            overflow-x: auto;
+            gap: 16px;
+            scrollbar-width: none;
+        }
+        #storiesContainer::-webkit-scrollbar {
+            display: none;
+        }
+        .story-circle {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            padding: 2px;
+        }
+        .story-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .add-story {
+            background: #e0e0e0;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex min-h-screen">
+<body class="bg-gray-100 text-gray-800 flex flex-col md:flex-row min-h-screen">
 
-      <!-- Sidebar -->
-      <div class="w-1/4 bg-white p-4 hidden md:block border-r border-gray-300">
+    <!-- Sidebar (Hidden on Mobile) -->
+    <div class="w-full md:w-1/4 bg-white p-4 hidden md:block border-r border-gray-300 md:min-h-screen">
         <h1 class="text-2xl font-bold mb-6 flex items-center">
             <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Logo" class="w-6 h-6 mr-2"> Instagram
         </h1>
         <ul class="space-y-6">
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i> <span>Home</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-search text-xl"></i> <span>Search</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i> <span>Explore</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i><a href="reels.html"><span> Reels</span></a></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-comment-dots text-xl"></i> <span>Messages</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i><a href="home.html"><span>Home</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-search text-xl"></i><span>Search</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i><a href="explore.html"><span>Explore</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i><a href="reels.html"><span>Reels</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer text-blue-500"><i class="fas fa-comment-dots text-xl"></i><a href="message.html"><span>Messages</span></a></li>
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-heart text-xl"></i> <span>Notifications</span></li>
             <li class="flex items-center space-x-4 cursor-pointer" onclick="document.getElementById('fileInput').click()"><i class="fas fa-plus-square text-xl"></i> <span>Create</span></li>
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="uploadImage(event)">
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i> <span>Profile</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i><a href="index.html"><span>Profile</span></a></li>
         </ul>
     </div>
+
     <!-- Main Content -->
-    <div class="flex-1 flex justify-center items-center p-4">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <div id="chat-box" class="h-64 overflow-y-auto mb-4 border-b border-gray-200">
-                <!-- Chat messages will appear here -->
+    <div class="flex-1 p-4 max-w-2xl mx-auto">
+        <!-- Stories -->
+        <div class="bg-white border border-gray-300 rounded-lg p-4 mb-4">
+            <div id="storiesContainer">
+                <!-- Stories will be inserted dynamically here -->
             </div>
-            <div class="flex">
-                <input type="text" id="user-input" placeholder="Type a message..." class="flex-1 p-2 border border-gray-300 rounded-l-lg focus:outline-none">
-                <button onclick="sendMessage()" class="bg-blue-500 text-white p-2 rounded-r-lg hover:bg-blue-600">Send</button>
-            </div>
+        </div>
+
+        <!-- Posts -->
+        <div id="postsContainer">
+            <!-- Posts will be inserted dynamically here -->
         </div>
     </div>
 
-    <!-- Right Sidebar -->
-    <div class="w-1/4 hidden lg:flex flex-col p-4">
+    <!-- Right Sidebar (Hidden on Mobile) -->
+    <div class="w-1/4 hidden lg:block p-4 bg-white border-l border-gray-200">
         <div class="flex items-center mb-4">
-            <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg" alt="User " class="w-10 h-10 rounded-full object-cover mr-3">
-            <div>
-                <p class="font-semibold">Skillyards</p>
-                <p class="text-gray-400 text-sm">Skillyard</p>
+            <h2 class="text-xl font-semibold">Messages</h2>
+            <i class="fas fa-edit ml-auto cursor-pointer text-gray-600"></i>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded-lg">
+                <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                <div class="flex-1">
+                    <p class="font-semibold">Skillyards</p>
+                    <p class="text-gray-400 text-sm">Active 30m ago</p>
+                </div>
+                <span class="bg-blue-500 text-white text-xs rounded-full px-2 py-1">3</span>
             </div>
-            <button class="ml-auto text-blue-500">Switch</button>
+            <!-- More contacts can be added here -->
+        </div>
+    </div>
+
+    <!-- Messaging Section (Fullscreen on Mobile, Sidebar on Desktop) -->
+    <div class="fixed inset-0 md:static md:w-full md:h-auto bg-gray-100 md:bg-transparent flex md:block z-50 md:z-0">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md md:max-w-none md:w-1/2 h-full md:h-[600px] mx-auto md:mx-0 md:my-4 flex flex-col">
+            <!-- Chat Header -->
+            <div class="flex items-center p-4 border-b border-gray-200">
+                <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                <div>
+                    <p class="font-semibold">Skillyards</p>
+                    <p class="text-gray-400 text-xs">Active now</p>
+                </div>
+                <div class="ml-auto flex space-x-4">
+                    <i class="fas fa-video cursor-pointer text-gray-600"></i>
+                    <i class="fas fa-phone cursor-pointer text-gray-600"></i>
+                    <i class="fas fa-info-circle cursor-pointer text-gray-600"></i>
+                </div>
+            </div>
+
+            <!-- Chat Box -->
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Chat messages will appear here -->
+            </div>
+
+            <!-- Message Input -->
+            <div class="p-4 border-t border-gray-200 flex items-center space-x-3">
+                <i class="fas fa-smile text-gray-600 cursor-pointer"></i>
+                <input type="text" id="user-input" placeholder="Message..." class="flex-1 p-2 bg-gray-100 rounded-full focus:outline-none">
+                <div class="flex space-x-3">
+                    <i class="fas fa-image text-gray-600 cursor-pointer"></i>
+                    <i class="fas fa-microphone text-gray-600 cursor-pointer"></i>
+                    <button onclick="sendMessage()" class="text-blue-500 font-semibold">Send</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        const predefinedResponses = [
+            "Hey there! How are you doing today?",
+            "That's an interesting message!",
+            "I'm always here to chat.",
+            "Could you tell me more about that?",
+            "Sounds great! Let's continue.",
+            "I'm listening...",
+            "Wow, that's cool!",
+            "Tell me something exciting!",
+            "You've got my attention.",
+            "I'm ready to hear your story."
+        ];
+
         function sendMessage() {
             const userInput = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-box');
 
             if (userInput.value.trim() === "") return;
 
+            // User Message
+            const userMessageContainer = document.createElement('div');
+            userMessageContainer.className = 'flex justify-end';
             const userMessage = document.createElement('div');
-            userMessage.className = 'text-right mb-2';
-            userMessage.innerHTML = `<span class="bg-blue-500 text-white p-2 rounded-lg">${userInput.value}</span>`;
-            chatBox.appendChild(userMessage);
+            userMessage.className = 'bg-blue-500 text-white p-2 rounded-lg max-w-[70%]';
+            userMessage.textContent = userInput.value;
+            userMessageContainer.appendChild(userMessage);
+            chatBox.appendChild(userMessageContainer);
 
-            const botMessage = document.createElement('div');
-            botMessage.className = 'text-left mb-2';
-            botMessage.innerHTML = `<span class="bg-gray-300 text-black p-2 rounded-lg">${getBotResponse(userInput.value)}</span>`;
-            chatBox.appendChild(botMessage);
+            // Bot Response
+            setTimeout(() => {
+                const botMessageContainer = document.createElement('div');
+                botMessageContainer.className = 'flex';
+                const botMessage = document.createElement('div');
+                botMessage.className = 'bg-gray-200 text-black p-2 rounded-lg max-w-[70%]';
+                botMessage.textContent = getBotResponse(userInput.value);
+                botMessageContainer.appendChild(botMessage);
+                chatBox.appendChild(botMessageContainer);
 
-            userInput.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
+                userInput.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
         }
 
         function getBotResponse(userMessage) {
-            if (userMessage.toLowerCase().includes('hello')) {
-                return 'Hello! How can I help you?';
-            } else if (userMessage.toLowerCase().includes('how are you')) {
-                return 'I am just a bot, but I am here to help you!';
-            } else if (userMessage.toLowerCase().includes('bye')) {
-                return 'Goodbye! Have a great day!';
+            const lowerMessage = userMessage.toLowerCase();
+
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                return 'Hi there! How can I help you today?';
+            } else if (lowerMessage.includes('how are you')) {
+                return 'I\'m doing great, thanks for asking! How about you?';
+            } else if (lowerMessage.includes('bye') || lowerMessage.includes('goodbye')) {
+                return 'Goodbye! Have a wonderful day!';
+            } else if (lowerMessage.includes('help')) {
+                return 'I\'m here to help. What do you need assistance with?';
             } else {
-                return 'I am not sure how to respond to that.';
+                // Return a random predefined response
+                return predefinedResponses[Math.floor(Math.random() * predefinedResponses.length)];
             }
         }
-    </script>
 
+        // Allow sending message with Enter key
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>

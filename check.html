@@ -69,146 +69,7 @@
         </div>
     </div>
 
-
 <script>
-        // ✅ Load posts and stories from localStorage when the page loads
-        document.addEventListener("DOMContentLoaded", function () {
-            loadStoredPosts();
-            loadStories();
-        });
-
-        // Function to upload an image
-        function uploadImage(event) {
-            const file = event.target.files[0]; // Get the selected file
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const postImageURL = e.target.result; // Get the Base64 URL of the image
-
-                    // Create a new post object
-                    const newPost = {
-                        user: "You",
-                        userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
-                        postImage: postImageURL,
-                        likes: 0, // Initialize like count
-                        comments: "Be the first to comment"
-                    };
-
-                    // Save the new post to localStorage
-                    savePostToLocalStorage(newPost);
-
-                    // Add the new post to the UI
-                    addPostToUI(newPost);
-                };
-                reader.readAsDataURL(file); // Read the image file
-            }
-        }
-
-        // Function to save a post to localStorage
-        function savePostToLocalStorage(post) {
-            let posts = JSON.parse(localStorage.getItem("posts")) || []; // Get existing posts
-            posts.unshift(post); // Add the new post to the beginning of the array
-            localStorage.setItem("posts", JSON.stringify(posts)); // Save back to localStorage
-        }
-
-        // Function to load posts from localStorage
-        function loadStoredPosts() {
-            const posts = JSON.parse(localStorage.getItem("posts")) || []; // Get posts from localStorage
-            const postsContainer = document.getElementById("postsContainer");
-
-            postsContainer.innerHTML = ""; // Clear existing posts
-
-            // Add each post to the UI
-            posts.forEach(post => {
-                addPostToUI(post);
-            });
-        }
-
-        // Function to add a post to the UI
-        function addPostToUI(post) {
-            const postsContainer = document.getElementById("postsContainer");
-
-            const newPostDiv = document.createElement("div");
-            newPostDiv.classList.add("bg-white", "border", "border-gray-300", "rounded-lg", "mb-6");
-
-            newPostDiv.innerHTML = `
-                <div class="flex items-center p-4 border-b border-gray-300">
-                    <img src="${post.userImage}" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
-                    <p class="font-semibold">${post.user}</p>
-                </div>
-                <img src="${post.postImage}" alt="Uploaded Post" class="w-full object-cover cursor-pointer">
-                <div class="flex space-x-4 p-4">
-                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-heart"></i></button>
-                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-comment"></i></button>
-                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-paper-plane"></i></button>
-                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125 ml-auto"><i class="far fa-bookmark"></i></button>
-                </div>
-                <p class="px-4 text-sm font-semibold like-count">${post.likes} likes</p>
-                <p class="px-4 text-sm text-gray-400">${post.comments}</p>
-            `;
-
-            // Add double-click event listener to the post image
-            const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
-            postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
-
-            // Add click event listener to the like button
-            const likeButton = newPostDiv.querySelector('.fa-heart');
-            likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
-
-            postsContainer.prepend(newPostDiv); // Add the new post to the top of the container
-        }
-
-        // Function to handle like button click
-        function handleLikeClick(post, postDiv) {
-            const likeButton = postDiv.querySelector('.fa-heart');
-            const likeCountElement = postDiv.querySelector('.like-count');
-
-            // Toggle the like state
-            if (likeButton.classList.contains('far')) {
-                likeButton.classList.remove('far');
-                likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
-                post.likes += 1; // Increment like count
-            } else {
-                likeButton.classList.remove('fas', 'text-red-500');
-                likeButton.classList.add('far'); // Change back to outline heart
-                post.likes -= 1; // Decrement like count
-            }
-
-            // Update the like count in the UI
-            likeCountElement.textContent = `${post.likes} likes`;
-
-            // Update the post in localStorage
-            updatePostInLocalStorage(post);
-        }
-
-        // Function to handle double-click on post image
-        function handleDoubleClick(post, postDiv) {
-            const likeButton = postDiv.querySelector('.fa-heart');
-            const likeCountElement = postDiv.querySelector('.like-count');
-
-            // Trigger like action
-            if (likeButton.classList.contains('far')) {
-                likeButton.classList.remove('far');
-                likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
-                post.likes += 1; // Increment like count
-            }
-
-            // Update the like count in the UI
-            likeCountElement.textContent = `${post.likes} likes`;
-
-            // Update the post in localStorage
-            updatePostInLocalStorage(post);
-        }
-
-        // Function to update a post in localStorage
-        function updatePostInLocalStorage(updatedPost) {
-            let posts = JSON.parse(localStorage.getItem("posts")) || [];
-            const index = posts.findIndex(post => post.postImage === updatedPost.postImage);
-            if (index !== -1) {
-                posts[index] = updatedPost;
-                localStorage.setItem("posts", JSON.stringify(posts));
-            }
-        }
 
         // Function to load stories
         function loadStories() {
@@ -286,6 +147,13 @@
             modalImage.style.display = 'none';
             storyModal.classList.add('hidden');
         }
+
+        // Load stories when the page loads
+        document.addEventListener("DOMContentLoaded", function () {
+            loadStories();
+        });
     </script>
 </body>
 </html>
+
+
