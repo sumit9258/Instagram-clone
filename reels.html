@@ -7,8 +7,45 @@
     <link rel="shortcut icon" href="asset/favicon.svg" type="image/x-icon" />
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .comment-section, .upload-section {
+            transition: all 0.3s ease;
+            transform: translateY(100%);
+        }
+        .comment-section.active, .upload-section.active {
+            transform: translateY(0);
+        }
+        .backdrop {
+            display: none;
+        }
+        .backdrop.active {
+            display: block;
+        }
+        .action-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .action-count {
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+        #videoPreview {
+            max-height: 60vh;
+            max-width: 100%;
+        }
+        .upload-container {
+            height: 60vh;
+            border: 2px dashed #ccc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+    </style>
+    
 </head>
 <body class="text-white flex h-screen overflow-hidden">
     <!-- Sidebar -->
@@ -17,115 +54,64 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Logo" class="w-6 h-6 mr-2"> Instagram
         </h1>
         <ul class="space-y-6">
-            <a href="index.html"><li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i> <span>Home</span></li></a>
+            <a href="index.html"><li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i><a href="home.html"></a> <span>Home</span></li></a>
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-search text-xl"></i> <span>Search</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i> <span>Explore</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i> <span>Reels</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-comment-dots text-xl"></i> <span>Messages</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-heart text-xl"></i> <span>Notifications</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-plus-square text-xl"></i> <span>Create</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i> <span>Profile</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i><a href="explore.html"><span>Explore</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i><a href="home.html"><span>Reels</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-comment-dots text-xl"></i><a href="massage.html"><span>Messages</span></a></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-heart text-xl"></i><span>Notifications</span></li>
+            <li onclick="openUpload()" class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-plus-square text-xl"></i><span>Create</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i><a href="profile.html"><span>Profile</span></a></li>
         </ul>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 flex items-center justify-center overflow-hidden">
+    <div class="flex-1 flex items-center justify-center overflow-hidden relative">
         <!-- Reels Section -->
         <div id="reelsContainer" class="space-y-4 overflow-y-auto h-full w-full max-w-md snap-y snap-mandatory"></div>
+        
+        <!-- Comment Section Backdrop -->
+        <div id="commentBackdrop" class="backdrop fixed inset-0 bg-black bg-opacity-50 z-10"></div>
+        
+        <!-- Comment Section -->
+        <div id="commentSection" class="comment-section fixed bottom-0 left-0 right-0 bg-gray-900 z-20 rounded-t-2xl p-4 h-3/4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Comments</h3>
+                <button id="closeComments" class="text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="commentsList" class="overflow-y-auto h-4/5 mb-4 space-y-4">
+                <!-- Comments will be loaded here -->
+            </div>
+            <div class="flex items-center">
+                <input id="commentInput" type="text" placeholder="Add a comment..." class="flex-1 bg-gray-800 rounded-full py-2 px-4 text-white focus:outline-none">
+                <button id="postComment" class="ml-2 text-blue-500 font-semibold">Post</button>
+            </div>
+        </div>
+
+        <!-- Upload Section Backdrop -->
+        <div id="uploadBackdrop" class="backdrop fixed inset-0 bg-black bg-opacity-50 z-10"></div>
+        
+        <!-- Upload Section -->
+        <div id="uploadSection" class="upload-section fixed bottom-0 left-0 right-0 bg-gray-900 z-20 rounded-t-2xl p-4 h-3/4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Upload Reel</h3>
+                <button id="closeUpload" class="text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex flex-col items-center justify-center h-4/5">
+                <div id="uploadContainer" class="upload-container w-full rounded-lg mb-4">
+                    <i class="fas fa-video text-4xl mb-2"></i>
+                    <p>Click to select a video or drag and drop</p>
+                    <input type="file" id="videoUpload" accept="video/*" class="hidden">
+                </div>
+                <video id="videoPreview" controls class="hidden mb-4"></video>
+                <input type="text" id="captionInput" placeholder="Add a caption..." class="w-full bg-gray-800 rounded-full py-2 px-4 text-white focus:outline-none mb-4">
+                <button id="uploadButton" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full disabled:opacity-50" disabled>
+                    Upload Reel
+                </button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // Video data
-        const videos = [
-            { type: 'video', src: 'asset/Ringing in the New Year with laughter, joy, and unforgettable memories at Skillyards! 🎉✨ - SkillYards (720p, h264).mp4' },
-            { type: 'video', src: 'asset/🎉 Happy Birthday, Pratik Sir! Wishing you a day filled with joy and laughter. - SkillYards (720p, h264).mp4' }
-        ];
-
-        // Store video data in localStorage
-        localStorage.setItem('reels', JSON.stringify(videos));
-
-        const reelsContainer = document.getElementById('reelsContainer');
-        const storedReels = JSON.parse(localStorage.getItem('reels')) || [];
-        const likedReels = JSON.parse(localStorage.getItem('likedReels')) || {};
-        let likeCounts = JSON.parse(localStorage.getItem('likeCounts')) || Array(storedReels.length).fill(0);
-
-        // Ensure all reels have a like count (default 0)
-        if (likeCounts.length !== storedReels.length) {
-            likeCounts = Array(storedReels.length).fill(0);
-        }
-
-        // Render reels
-        storedReels.forEach((reel, index) => {
-            const reelDiv = document.createElement('div');
-            reelDiv.className = 'relative h-full flex items-center justify-center snap-center';
-
-            // Reel HTML
-            reelDiv.innerHTML = `
-                <video id="video-${index}" class="reel w-full h-full object-cover rounded-lg">
-                    <source src="${reel.src}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <button onclick="togglePlayPause(${index})" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 hover:opacity-100 transition-opacity">
-                    <i class="fas fa-pause text-4xl text-white"></i>
-                </button>
-                <div class="absolute right-4 flex flex-col space-y-4 items-center text-white">
-                    <i id="like-${index}" onclick="toggleLike(${index})" class="fas fa-heart text-2xl cursor-pointer ${likedReels[index] ? 'text-red-500' : 'text-white'}"></i>
-                    <span id="like-count-${index}" class="text-sm">${likeCounts[index]}</span>
-                    <i class="fas fa-comment text-2xl cursor-pointer"></i>
-                    <i class="fas fa-share text-2xl cursor-pointer"></i>
-                </div>
-            `;
-            reelsContainer.appendChild(reelDiv);
-        });
-
-        // Play/Pause toggle
-        function togglePlayPause(index) {
-            const video = document.getElementById(`video-${index}`);
-            video.paused ? video.play() : video.pause();
-        }
-
-        // Like toggle with 0 and 1 behavior
-        function toggleLike(index) {
-            const likeIcon = document.getElementById(`like-${index}`);
-            const likeCount = document.getElementById(`like-count-${index}`);
-
-            if (likedReels[index]) {
-                // Unlike the reel
-                likedReels[index] = false;
-                likeCounts[index] = 0; // Set like count to 0
-                likeIcon.classList.remove('text-red-500');
-                likeIcon.classList.add('text-white');
-            } else {
-                // Like the reel
-                likedReels[index] = true;
-                likeCounts[index] = 1; // Set like count to 1
-                likeIcon.classList.add('text-red-500');
-                likeIcon.classList.remove('text-white');
-            }
-
-            // Update localStorage
-            localStorage.setItem('likedReels', JSON.stringify(likedReels));
-            localStorage.setItem('likeCounts', JSON.stringify(likeCounts));
-
-            // Update UI
-            likeCount.textContent = likeCounts[index];
-        }
-
-        // Automatic play/pause on scroll with more scroll required to switch
-        function checkReels() {
-            const reels = document.querySelectorAll('.reel');
-            const threshold = 0.6; // Scroll more before switching
-            reels.forEach(reel => {
-                const rect = reel.getBoundingClientRect();
-                const inView = rect.top >= 0 && rect.bottom <= window.innerHeight * (1 + threshold);
-                if (reel.tagName === 'VIDEO') {
-                    inView ? reel.play() : reel.pause();
-                }
-            });
-        }
-
-        reelsContainer.addEventListener('scroll', checkReels);
-        window.addEventListener('load', checkReels);
-    </script>
+ <script src="reels.js"></script>
 </body>
 </html>

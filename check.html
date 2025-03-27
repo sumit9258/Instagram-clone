@@ -87,315 +87,146 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg w-full max-w-md">
-            <div class="p-4 border-b border-gray-300 flex justify-between items-center">
-                <h2 class="text-xl font-bold" id="profileUsername">User Profile</h2>
-                <button onclick="closeProfile()" class="text-gray-600"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-4">
-                <div class="flex items-center mb-4">
-                    <img id="profileImage" src="" alt="Profile" class="w-16 h-16 rounded-full object-cover mr-4">
-                    <div>
-                        <p class="font-semibold" id="profileName">Name</p>
-                        <p class="text-gray-600 text-sm" id="profileBio">Bio goes here</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-1 mb-4">
-                    <div class="text-center">
-                        <p class="font-bold">0</p>
-                        <p class="text-gray-600 text-sm">Posts</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="font-bold">0</p>
-                        <p class="text-gray-600 text-sm">Followers</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="font-bold">0</p>
-                        <p class="text-gray-600 text-sm">Following</p>
-                    </div>
-                </div>
-                <div id="profilePosts" class="grid grid-cols-3 gap-1">
-                    <!-- User posts will appear here -->
-                </div>
-            </div>
-        </div>
-    </div>
 
 <script>
-    // ✅ Load posts and stories from localStorage when the page loads
-    document.addEventListener("DOMContentLoaded", function () {
-        loadStoredPosts();
-        loadStories();
-        initializeUsers(); // Initialize sample users
-    });
-
-    // Toggle search sidebar
-    function toggleSearch() {
-        const mainSidebar = document.querySelector('.w-1\/4.bg-white');
-        const searchSidebar = document.getElementById('searchSidebar');
-        
-        if (searchSidebar.classList.contains('hidden')) {
-            mainSidebar.classList.add('hidden');
-            searchSidebar.classList.remove('hidden');
-            document.getElementById('searchInput').focus();
-        } else {
-            searchSidebar.classList.add('hidden');
-            mainSidebar.classList.remove('hidden');
-        }
-    }
-
-    // Initialize sample users
-    function initializeUsers() {
-        if (!localStorage.getItem('users')) {
-            const users = [
-                {
-                    id: 1,
-                    username: 'skillyards',
-                    name: 'Skillyards',
-                    image: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-                    bio: 'Learning and growing',
-                    posts: []
-                },
-                {
-                    id: 2,
-                    username: 'user1',
-                    name: 'User One',
-                    image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
-                    bio: 'Photography enthusiast',
-                    posts: []
-                },
-                {
-                    id: 3,
-                    username: 'user2',
-                    name: 'User Two',
-                    image: 'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg',
-                    bio: 'Travel lover',
-                    posts: []
-                },
-                {
-                    id: 4,
-                    username: 'user3',
-                    name: 'User Three',
-                    image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
-                    bio: 'Foodie',
-                    posts: []
-                }
-            ];
-            localStorage.setItem('users', JSON.stringify(users));
-        }
-    }
-
-    // Search users function
-    function searchUsers() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const searchResults = document.getElementById('searchResults');
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        
-        searchResults.innerHTML = '';
-        
-        if (searchTerm.trim() === '') {
-            // Show recent searches or popular accounts
-            users.slice(0, 5).forEach(user => {
-                addUserToSearchResults(user, searchResults);
-            });
-            return;
-        }
-        
-        const filteredUsers = users.filter(user => 
-            user.username.toLowerCase().includes(searchTerm) || 
-            user.name.toLowerCase().includes(searchTerm)
-        );
-        
-        if (filteredUsers.length === 0) {
-            searchResults.innerHTML = '<p class="text-gray-500 text-center py-4">No users found</p>';
-        } else {
-            filteredUsers.forEach(user => {
-                addUserToSearchResults(user, searchResults);
-            });
-        }
-    }
-
-    // Add user to search results
-    function addUserToSearchResults(user, container) {
-        const userDiv = document.createElement('div');
-        userDiv.classList.add('flex', 'items-center', 'p-2', 'rounded-lg', 'hover:bg-gray-100', 'cursor-pointer');
-        userDiv.onclick = () => openProfile(user);
-        
-        userDiv.innerHTML = `
-            <img src="${user.image}" alt="${user.name}" class="w-10 h-10 rounded-full object-cover mr-3">
-            <div>
-                <p class="font-semibold">${user.username}</p>
-                <p class="text-gray-600 text-sm">${user.name}</p>
-            </div>
-        `;
-        
-        container.appendChild(userDiv);
-    }
-
-    // Open user profile
-    function openProfile(user) {
-        const profileModal = document.getElementById('profileModal');
-        document.getElementById('profileUsername').textContent = user.username;
-        document.getElementById('profileName').textContent = user.name;
-        document.getElementById('profileImage').src = user.image;
-        document.getElementById('profileBio').textContent = user.bio;
-        
-        // Load user posts
-        const profilePosts = document.getElementById('profilePosts');
-        profilePosts.innerHTML = '';
-        
-        if (user.posts && user.posts.length > 0) {
-            user.posts.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.classList.add('aspect-square', 'bg-gray-200');
-                postDiv.innerHTML = `<img src="${post.postImage}" alt="Post" class="w-full h-full object-cover">`;
-                profilePosts.appendChild(postDiv);
-            });
-        }
-        
-        profileModal.classList.remove('hidden');
-    }
-
-    // Close profile modal
-    function closeProfile() {
-        document.getElementById('profileModal').classList.add('hidden');
-    }
-
-    // Rest of your existing functions (uploadImage, savePostToLocalStorage, loadStoredPosts, etc.)
-    // Function to upload an image
-    function uploadImage(event) {
-        const file = event.target.files[0]; // Get the selected file
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const postImageURL = e.target.result; // Get the Base64 URL of the image
-
-                // Create a new post object
-                const newPost = {
-                    user: "You",
-                    userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
-                    postImage: postImageURL,
-                    likes: 0, // Initialize like count
-                    comments: "Be the first to comment"
-                };
-
-                // Save the new post to localStorage
-                savePostToLocalStorage(newPost);
-
-                // Add the new post to the UI
-                addPostToUI(newPost);
-            };
-            reader.readAsDataURL(file); // Read the image file
-        }
-    }
-
-    // Function to save a post to localStorage
-    function savePostToLocalStorage(post) {
-        let posts = JSON.parse(localStorage.getItem("posts")) || []; // Get existing posts
-        posts.unshift(post); // Add the new post to the beginning of the array
-        localStorage.setItem("posts", JSON.stringify(posts)); // Save back to localStorage
-    }
-
-    // Function to load posts from localStorage
-    function loadStoredPosts() {
-        const posts = JSON.parse(localStorage.getItem("posts")) || []; // Get posts from localStorage
-        const postsContainer = document.getElementById("postsContainer");
-
-        postsContainer.innerHTML = ""; // Clear existing posts
-
-        // Add each post to the UI
-        posts.forEach(post => {
-            addPostToUI(post);
+        // ✅ Load posts and stories from localStorage when the page loads
+        document.addEventListener("DOMContentLoaded", function () {
+            loadStoredPosts();
+            loadStories();
         });
-    }
 
-    // Function to add a post to the UI
-    function addPostToUI(post) {
-        const postsContainer = document.getElementById("postsContainer");
+        // Function to upload an image
+        function uploadImage(event) {
+            const file = event.target.files[0]; // Get the selected file
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const postImageURL = e.target.result; // Get the Base64 URL of the image
 
-        const newPostDiv = document.createElement("div");
-        newPostDiv.classList.add("bg-white", "border", "border-gray-300", "rounded-lg", "mb-6");
+                    // Create a new post object
+                    const newPost = {
+                        user: "You",
+                        userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+                        postImage: postImageURL,
+                        likes: 0, // Initialize like count
+                        comments: "Be the first to comment"
+                    };
 
-        newPostDiv.innerHTML = `
-            <div class="flex items-center p-4 border-b border-gray-300">
-                <img src="${post.userImage}" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
-                <p class="font-semibold">${post.user}</p>
-            </div>
-            <img src="${post.postImage}" alt="Uploaded Post" class="w-full object-cover cursor-pointer">
-            <div class="flex space-x-4 p-4">
-                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-heart"></i></button>
-                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-comment"></i></button>
-                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-paper-plane"></i></button>
-                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125 ml-auto"><i class="far fa-bookmark"></i></button>
-            </div>
-            <p class="px-4 text-sm font-semibold like-count">${post.likes} likes</p>
-            <p class="px-4 text-sm text-gray-400">${post.comments}</p>
-        `;
+                    // Save the new post to localStorage
+                    savePostToLocalStorage(newPost);
 
-        // Add double-click event listener to the post image
-        const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
-        postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
-
-        // Add click event listener to the like button
-        const likeButton = newPostDiv.querySelector('.fa-heart');
-        likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
-
-        postsContainer.prepend(newPostDiv); // Add the new post to the top of the container
-    }
-
-    // Function to handle like button click
-    function handleLikeClick(post, postDiv) {
-        const likeButton = postDiv.querySelector('.fa-heart');
-        const likeCountElement = postDiv.querySelector('.like-count');
-
-        // Toggle the like state
-        if (likeButton.classList.contains('far')) {
-            likeButton.classList.remove('far');
-            likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
-            post.likes += 1; // Increment like count
-        } else {
-            likeButton.classList.remove('fas', 'text-red-500');
-            likeButton.classList.add('far'); // Change back to outline heart
-            post.likes -= 1; // Decrement like count
+                    // Add the new post to the UI
+                    addPostToUI(newPost);
+                };
+                reader.readAsDataURL(file); // Read the image file
+            }
         }
 
-        // Update the like count in the UI
-        likeCountElement.textContent = `${post.likes} likes`;
-
-        // Update the post in localStorage
-        updatePostInLocalStorage(post);
-    }
-
-    // Function to handle double-click on post image
-    function handleDoubleClick(post, postDiv) {
-        const likeButton = postDiv.querySelector('.fa-heart');
-        const likeCountElement = postDiv.querySelector('.like-count');
-
-        // Trigger like action
-        if (likeButton.classList.contains('far')) {
-            likeButton.classList.remove('far');
-            likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
-            post.likes += 1; // Increment like count
+        // Function to save a post to localStorage
+        function savePostToLocalStorage(post) {
+            let posts = JSON.parse(localStorage.getItem("posts")) || []; // Get existing posts
+            posts.unshift(post); // Add the new post to the beginning of the array
+            localStorage.setItem("posts", JSON.stringify(posts)); // Save back to localStorage
         }
 
-        // Update the like count in the UI
-        likeCountElement.textContent = `${post.likes} likes`;
+        // Function to load posts from localStorage
+        function loadStoredPosts() {
+            const posts = JSON.parse(localStorage.getItem("posts")) || []; // Get posts from localStorage
+            const postsContainer = document.getElementById("postsContainer");
 
-        // Update the post in localStorage
-        updatePostInLocalStorage(post);
-    }
+            postsContainer.innerHTML = ""; // Clear existing posts
 
-    // Function to update a post in localStorage
-    function updatePostInLocalStorage(updatedPost) {
-        let posts = JSON.parse(localStorage.getItem("posts")) || [];
-        const index = posts.findIndex(post => post.postImage === updatedPost.postImage);
-        if (index !== -1) {
-            posts[index] = updatedPost;
-            localStorage.setItem("posts", JSON.stringify(posts));
+            // Add each post to the UI
+            posts.forEach(post => {
+                addPostToUI(post);
+            });
         }
-    }
+
+        // Function to add a post to the UI
+        function addPostToUI(post) {
+            const postsContainer = document.getElementById("postsContainer");
+
+            const newPostDiv = document.createElement("div");
+            newPostDiv.classList.add("bg-white", "border", "border-gray-300", "rounded-lg", "mb-6");
+
+            newPostDiv.innerHTML = `
+                <div class="flex items-center p-4 border-b border-gray-300">
+                    <img src="${post.userImage}" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                    <p class="font-semibold">${post.user}</p>
+                </div>
+                <img src="${post.postImage}" alt="Uploaded Post" class="w-full object-cover cursor-pointer">
+                <div class="flex space-x-4 p-4">
+                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-heart"></i></button>
+                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-comment"></i></button>
+                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-paper-plane"></i></button>
+                    <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125 ml-auto"><i class="far fa-bookmark"></i></button>
+                </div>
+                <p class="px-4 text-sm font-semibold like-count">${post.likes} likes</p>
+                <p class="px-4 text-sm text-gray-400">${post.comments}</p>
+            `;
+
+            // Add double-click event listener to the post image
+            const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
+            postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
+
+            // Add click event listener to the like button
+            const likeButton = newPostDiv.querySelector('.fa-heart');
+            likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
+
+            postsContainer.prepend(newPostDiv); // Add the new post to the top of the container
+        }
+
+        // Function to handle like button click
+        function handleLikeClick(post, postDiv) {
+            const likeButton = postDiv.querySelector('.fa-heart');
+            const likeCountElement = postDiv.querySelector('.like-count');
+
+            // Toggle the like state
+            if (likeButton.classList.contains('far')) {
+                likeButton.classList.remove('far');
+                likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
+                post.likes += 1; // Increment like count
+            } else {
+                likeButton.classList.remove('fas', 'text-red-500');
+                likeButton.classList.add('far'); // Change back to outline heart
+                post.likes -= 1; // Decrement like count
+            }
+
+            // Update the like count in the UI
+            likeCountElement.textContent = `${post.likes} likes`;
+
+            // Update the post in localStorage
+            updatePostInLocalStorage(post);
+        }
+
+        // Function to handle double-click on post image
+        function handleDoubleClick(post, postDiv) {
+            const likeButton = postDiv.querySelector('.fa-heart');
+            const likeCountElement = postDiv.querySelector('.like-count');
+
+            // Trigger like action
+            if (likeButton.classList.contains('far')) {
+                likeButton.classList.remove('far');
+                likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
+                post.likes += 1; // Increment like count
+            }
+
+            // Update the like count in the UI
+            likeCountElement.textContent = `${post.likes} likes`;
+
+            // Update the post in localStorage
+            updatePostInLocalStorage(post);
+        }
+
+        // Function to update a post in localStorage
+        function updatePostInLocalStorage(updatedPost) {
+            let posts = JSON.parse(localStorage.getItem("posts")) || [];
+            const index = posts.findIndex(post => post.postImage === updatedPost.postImage);
+            if (index !== -1) {
+                posts[index] = updatedPost;
+                localStorage.setItem("posts", JSON.stringify(posts));
+            }
+        }
 
     // Function to load stories
     function loadStories() {
@@ -467,13 +298,14 @@
         const modalVideo = document.getElementById('modalVideo');
         const modalImage = document.getElementById('modalImage');
 
-        modalVideo.pause();
-        modalVideo.currentTime = 0;
-        modalVideo.style.display = 'none';
-        modalImage.style.display = 'none';
-        storyModal.classList.add('hidden');
-    }
-    
-</script>
+            modalVideo.pause();
+            modalVideo.currentTime = 0;
+            modalVideo.style.display = 'none';
+            modalImage.style.display = 'none';
+            storyModal.classList.add('hidden');
+        }
+    </script>
 </body>
 </html>
+
+

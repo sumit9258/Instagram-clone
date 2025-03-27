@@ -1,53 +1,203 @@
-// ✅ Load posts from localStorage when the page loads
-document.addEventListener("DOMContentLoaded", loadStoredPosts);
+// Comments Script for Instagram UI Clone
 
-// Function to upload an image
-function uploadImage(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const postImageURL = e.target.result;
+// Function to render existing comments
+function renderExistingComments(post) {
+    // Check if the post has comments stored
+    const storedComments = post.storedComments || [];
+    
+    if (storedComments.length === 0) {
+        return `<p class="text-center text-gray-500">No comments yet</p>`;
+    }
+    
+    return storedComments.map((comment, index) => `
+        <div class="flex items-start mb-4 relative group">
+            <img 
+                src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg" 
+                alt="User" 
+                class="w-8 h-8 rounded-full mr-3 object-cover"
+            >
+            <div class="flex-1">
+                <p class="font-semibold">${comment.username}</p>
+                <p class="text-gray-700">${comment.text}</p>
+                <p class="text-xs text-gray-500">${comment.timestamp}</p>
+            </div>
+            <button 
+                onclick="deleteComment('${post.postImage}', ${index})" 
+                class="absolute top-0 right-0 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    `).join('');
+}
 
-            // Create a new post object
-            const newPost = {
-                user: "You",
-                userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
-                postImage: postImageURL,
-                likes: 0,
-                comments: "Be the first to comment"
-            };
+// Function to add a comment modal to a post
+function addCommentModal(post, postDiv) {
+    // Create comment modal container
+    const commentModal = document.createElement('div');
+    commentModal.classList.add('fixed', 'inset-0', 'bg-black', 'bg-opacity-50', 'flex', 'items-center', 'justify-center', 'z-50');
+    
+    commentModal.innerHTML = `
+        <div class="bg-white rounded-lg w-full max-w-md">
+            <div class="p-4 border-b border-gray-300 flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Comments</h2>
+                <button onclick="closeCommentModal(this)" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div id="existingCommentsContainer" class="p-4 max-h-64 overflow-y-auto">
+                ${renderExistingComments(post)}
+            </div>
+            
+            <div class="p-4 border-t border-gray-300 flex items-center">
+                <input 
+                    type="text" 
+                    id="commentInput" 
+                    placeholder="Add a comment..." 
+                    class="flex-1 p-2 border rounded-l-lg"
+                >
+                <button 
+                    onclick="submitComment(this, '${post.postImage}')" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+                >
+                    Post
+                </button>
+            </div>
+        </div>
+    `;
 
-            // Save the new post to localStorage
-            savePostToLocalStorage(newPost);
+    // Append modal to body
+    document.body.appendChild(commentModal);
+}
 
-            // Add the new post to the UI
-            addPostToUI(newPost);
+// Function to close comment modal
+function closeCommentModal(closeButton) {
+    const modal = closeButton.closest('.fixed');
+    modal.remove();
+}
+
+// Function to submit a comment
+function submitComment(postButton, postImageKey) {
+    const commentInput = postButton.previousElementSibling;
+    const commentText = commentInput.value.trim();
+    
+    if (commentText === '') return;
+
+    // Get existing posts from localStorage
+    let posts = JSON.parse(localStorage.getItem("posts")) || [];
+    
+    // Find the specific post
+    const postIndex = posts.findIndex(post => post.postImage === postImageKey);
+    
+    if (postIndex !== -1) {
+        // Create comment object
+        const newComment = {
+            username: localStorage.getItem("username") || "You",
+            text: commentText,
+            timestamp: new Date().toLocaleString()
         };
-        reader.readAsDataURL(file);
+
+        // Initialize storedComments if not exists
+        if (!posts[postIndex].storedComments) {
+            posts[postIndex].storedComments = [];
+        }
+
+        // Add comment to post
+        posts[postIndex].storedComments.push(newComment);
+        
+        // Update comments text in the main post
+        posts[postIndex].comments = `${posts[postIndex].storedComments.length} comments`;
+
+        // Save updated posts back to localStorage
+        localStorage.setItem("posts", JSON.stringify(posts));
+
+        // Update UI
+        const existingCommentsContainer = document.getElementById('existingCommentsContainer');
+        existingCommentsContainer.innerHTML = renderExistingComments(posts[postIndex]);
+        
+        // Update comments count in the main post view
+        const postsContainer = document.getElementById("postsContainer");
+        const postElements = postsContainer.querySelectorAll('.comments-count');
+        postElements.forEach((element, index) => {
+            if (index === postIndex) {
+                element.textContent = `${posts[postIndex].storedComments.length} comments`;
+            }
+        });
+        
+        // Clear input
+        commentInput.value = '';
     }
 }
 
-// Function to save a post to localStorage
-function savePostToLocalStorage(post) {
+// Function to delete a comment
+function deleteComment(postImageKey, commentIndex) {
+    // Get existing posts from localStorage
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
-    posts.unshift(post);
-    localStorage.setItem("posts", JSON.stringify(posts));
+    
+    // Find the specific post
+    const postIndex = posts.findIndex(post => post.postImage === postImageKey);
+    
+    if (postIndex !== -1 && posts[postIndex].storedComments) {
+        // Remove the comment at the specified index
+        posts[postIndex].storedComments.splice(commentIndex, 1);
+        
+        // Update comments text in the main post
+        posts[postIndex].comments = posts[postIndex].storedComments.length > 0 
+            ? `${posts[postIndex].storedComments.length} comments`
+            : "Be the first to comment";
+
+        // Save updated posts back to localStorage
+        localStorage.setItem("posts", JSON.stringify(posts));
+
+        // Update comments in the modal
+        const existingCommentsContainer = document.getElementById('existingCommentsContainer');
+        existingCommentsContainer.innerHTML = renderExistingComments(posts[postIndex]);
+        
+        // Update comments count in the main post view
+        const postsContainer = document.getElementById("postsContainer");
+        const postElements = postsContainer.querySelectorAll('.comments-count');
+        postElements.forEach((element, index) => {
+            if (index === postIndex) {
+                element.textContent = posts[postIndex].comments;
+            }
+        });
+    }
 }
 
-// Function to load posts from localStorage
-function loadStoredPosts() {
-    const posts = JSON.parse(localStorage.getItem("posts")) || [];
-    const postsContainer = document.getElementById("postsContainer");
-
-    postsContainer.innerHTML = "";
-
-    posts.forEach(post => {
-        addPostToUI(post);
+// Modify addPostToUI function to add comment modal trigger
+function enhancePostWithComments(post, newPostDiv) {
+    // Find comment button
+    const commentButton = newPostDiv.querySelector('.fa-comment');
+    
+    commentButton.addEventListener('click', () => {
+        addCommentModal(post, newPostDiv);
     });
 }
 
-// Function to add a post to the UI
+// Modify the existing loadStoredPosts to use new comment enhancement
+function loadStoredPosts() {
+    let posts = JSON.parse(localStorage.getItem("posts")) || [];
+
+    // Existing default posts loading logic...
+    const defaultPosts = [
+        // ... (keep your existing default posts)
+    ];
+
+    // Existing post adding logic remains the same
+    const postsContainer = document.getElementById("postsContainer");
+    postsContainer.innerHTML = "";
+    
+    posts.forEach(post => {
+        // Update comments count before adding post
+        post.comments = post.storedComments && post.storedComments.length > 0 
+            ? `${post.storedComments.length} comments` 
+            : "Be the first to comment";
+
+        const postDiv = addPostToUI(post);
+        enhancePostWithComments(post, postDiv);
+    });
+}
+
+// Modify addPostToUI to include comments count
 function addPostToUI(post) {
     const postsContainer = document.getElementById("postsContainer");
 
@@ -67,132 +217,47 @@ function addPostToUI(post) {
             <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125 ml-auto"><i class="far fa-bookmark"></i></button>
         </div>
         <p class="px-4 text-sm font-semibold like-count">${post.likes} likes</p>
-        <p class="px-4 text-sm text-gray-400">${post.comments}</p>
+        <p class="px-4 text-sm text-gray-400 comments-count">${post.comments}</p>
     `;
 
-    // Add double-click event listener to the post image
+    // Existing event listeners...
     const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
     postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
 
-    // Add click event listener to the like button
     const likeButton = newPostDiv.querySelector('.fa-heart');
     likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
 
     postsContainer.prepend(newPostDiv);
+    
+    return newPostDiv;
 }
 
-// Function to handle like button click
-function handleLikeClick(post, postDiv) {
-    const likeButton = postDiv.querySelector('.fa-heart');
-    const likeCountElement = postDiv.querySelector('.like-count');
+// Ensure compatibility with existing code
+document.addEventListener("DOMContentLoaded", loadStoredPosts);
 
-    if (likeButton.classList.contains('far')) {
-        likeButton.classList.remove('far');
-        likeButton.classList.add('fas', 'text-red-500');
-        post.likes += 1;
-    } else {
-        likeButton.classList.remove('fas', 'text-red-500');
-        likeButton.classList.add('far');
-        post.likes -= 1;
-    }
 
-    likeCountElement.textContent = `${post.likes} likes`;
-    updatePostInLocalStorage(post);
-}
+function uploadImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-// Function to handle double-click on post image
-function handleDoubleClick(post, postDiv) {
-    const likeButton = postDiv.querySelector('.fa-heart');
-    const likeCountElement = postDiv.querySelector('.like-count');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const posts = JSON.parse(localStorage.getItem("posts")) || [];
+        
+        const newPost = {
+            user: localStorage.getItem("username") || "You",
+            userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg", // Default user image
+            postImage: e.target.result,
+            likes: 0,
+            comments: "Be the first to comment",
+            storedComments: []
+        };
 
-    if (likeButton.classList.contains('far')) {
-        likeButton.classList.remove('far');
-        likeButton.classList.add('fas', 'text-red-500');
-        post.likes += 1;
-    }
-
-    likeCountElement.textContent = `${post.likes} likes`;
-    updatePostInLocalStorage(post);
-}
-
-// Function to update a post in localStorage
-function updatePostInLocalStorage(updatedPost) {
-    let posts = JSON.parse(localStorage.getItem("posts")) || [];
-    const index = posts.findIndex(post => post.postImage === updatedPost.postImage);
-    if (index !== -1) {
-        posts[index] = updatedPost;
+        posts.push(newPost);
         localStorage.setItem("posts", JSON.stringify(posts));
-    }
-}
 
-
-
-
-
-
-
-
-
-
-function loadStoredPosts() {
-    let posts = JSON.parse(localStorage.getItem("posts")) || [];
-
-    // Default posts hamesha add hone chahiye bina purane posts ko hataye
-    const defaultPosts = [
-        {
-            user: "nature_wala",
-            userImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
-            postImage: "https://images.unsplash.com/photo-1501854140801-50d01698950b",
-            likes: 356,
-            comments: "The beauty of nature is amazing! 🌿"
-        },
-        {
-            user: "desi_foodie",
-            userImage: "https://images.unsplash.com/photo-1554151228-14d9def656e4",
-            postImage: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
-            likes: 789,
-            comments: "Had homemade food today! How does it look? 😋"
-        },
-        {
-            user: "tech_india",
-            userImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
-            postImage: "https://images.unsplash.com/photo-1518770660439-4636190af475",
-            likes: 432,
-            comments: "Got a new smartphone! #TechLover"
-        },
-        {
-            user: "bollywood_fan",
-            userImage: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-            postImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba",
-            likes: 1023,
-            comments: "Watched a new movie today, it was amazing! 🎬"
-        },
-        {
-            user: "travel_india",
-            userImage: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce",
-            postImage: "https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3",
-            likes: 876,
-            comments: "Visited the Taj Mahal, what a view! 😍"
-        },
-        {
-            user: "fitness_baba",
-            userImage: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5",
-            postImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
-            likes: 654,
-            comments: "Daily exercise is a must! 💪"
-        }
-    ];
-
-    // Har bar default posts add karte hain bina existing posts delete kiye
-    defaultPosts.forEach(defaultPost => {
-        if (!posts.some(post => post.postImage === defaultPost.postImage)) {
-            posts.push(defaultPost);
-        }
-    });
-
-    localStorage.setItem("posts", JSON.stringify(posts));
-
-    const postsContainer = document.getElementById("postsContainer");
-    postsContainer.innerHTML = "";  // Clear existing posts in UI
-    posts.forEach(post => addPostToUI(post));
+        const newPostDiv = addPostToUI(newPost);
+        enhancePostWithComments(newPost, newPostDiv);
+    };
+    reader.readAsDataURL(file);
 }
