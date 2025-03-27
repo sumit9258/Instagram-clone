@@ -38,6 +38,13 @@
         .add-story {
             background: #e0e0e0;
         }
+        #profileModal {
+            z-index: 1000;
+        }
+        #profileModal .profile-content {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex">
@@ -49,7 +56,7 @@
         </h1>
         <ul class="space-y-6">
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-home text-xl"></i> <span>Home</span></li>
-            <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-search text-xl"></i> <span>Search</span></li>
+            <li class="flex items-center space-x-4 cursor-pointer" onclick="toggleSearch()"><i class="fas fa-search text-xl"></i> <span>Search</span></li>
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-compass text-xl"></i> <span>Explore</span></li>
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-clapperboard text-xl"></i><a href="reels.html"><span> Reels</span></a></li>
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-comment-dots text-xl"></i> <span>Messages</span></li>
@@ -58,6 +65,20 @@
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="uploadImage(event)">
             <li class="flex items-center space-x-4 cursor-pointer"><i class="fas fa-user text-xl"></i> <span>Profile</span></li>
         </ul>
+    </div>
+
+    <!-- Search Sidebar -->
+    <div id="searchSidebar" class="w-1/4 bg-white p-4 hidden border-r border-gray-300 fixed left-0 top-0 h-full z-40">
+        <div class="flex items-center mb-4">
+            <button onclick="toggleSearch()" class="mr-2 text-gray-600"><i class="fas fa-arrow-left"></i></button>
+            <input type="text" id="searchInput" placeholder="Search" 
+                   class="w-full p-1 bg-gray-100 rounded-lg focus:outline-none focus:bg-white focus:border focus:border-gray-300"
+                   oninput="searchUsers()">
+        </div>
+        
+        <div id="searchResults" class="space-y-1">
+            <!-- Search results will appear here -->
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -122,11 +143,6 @@
     </div>
 
     <!-- Story View Modal -->
-    <div id="storyViewModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
-        <!-- Content will be inserted dynamically -->
-    </div>
-
-    <!-- Story View Modal -->
     <div id="storyViewModal" class="fixed inset-0 bg-black z-50 hidden">
         <div class="relative w-full h-full">
             <img id="storyViewImage" src="" class="w-full h-full object-contain">
@@ -146,9 +162,525 @@
         </div>
     </div>
 
-    <script src="like.js"></script>
-    <script src="post.js"></script>
-    <script src="modal.js"></script>
-    <script src="story.js"></script>
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="p-4 border-b border-gray-300 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h2 class="text-xl font-bold" id="profileUsername">User Profile</h2>
+                <button onclick="closeProfile()" class="text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="profile-content p-4">
+                <div class="flex items-center mb-4">
+                    <img id="profileImage" src="" alt="Profile" class="w-20 h-20 rounded-full object-cover mr-4">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <p class="font-semibold text-lg" id="profileName">Name</p>
+                            <button id="followButton" onclick="toggleFollow()" class="ml-4 px-4 py-1 rounded-lg font-semibold text-sm">
+                                Follow
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 mb-2">
+                            <div class="text-center">
+                                <p class="font-bold" id="profilePostsCount">0</p>
+                                <p class="text-gray-600 text-xs">Posts</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold" id="profileFollowers">0</p>
+                                <p class="text-gray-600 text-xs">Followers</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold" id="profileFollowing">0</p>
+                                <p class="text-gray-600 text-xs">Following</p>
+                            </div>
+                        </div>
+                        <p class="text-sm" id="profileBio">Bio goes here</p>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-300 pt-4">
+                    <h3 class="font-semibold mb-2">Posts</h3>
+                    <div id="profilePostsGrid" class="grid grid-cols-3 gap-1">
+                        <!-- User posts will appear here -->
+                    </div>
+                    <p id="noPostsMessage" class="text-gray-500 text-center py-4">No posts yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Initialize sample users when page loads
+    document.addEventListener("DOMContentLoaded", function() {
+        initializeUsers();
+        loadStories();
+        loadStoredPosts();
+    });
+
+    // Initialize sample users in localStorage
+    function initializeUsers() {
+        if (!localStorage.getItem('users')) {
+            const users = [
+                {
+                    id: 1,
+                    username: 'sumit_sikarwar_love',
+                    name: 'Sumit Sikarwar',
+                    image: 'https://randomuser.me/api/portraits/men/1.jpg',
+                    bio: 'Love to travel and explore',
+                    isFollowing: true,
+                    followers: 1200,
+                    following: 340,
+                    posts: [
+                        {postImage: 'https://picsum.photos/id/10/500/500'},
+                        {postImage: 'https://picsum.photos/id/11/500/500'},
+                        {postImage: 'https://picsum.photos/id/12/500/500'}
+                    ]
+                },
+                {
+                    id: 2,
+                    username: 'thakur_aman_jadon_302',
+                    name: 'Aman Singh Jadon',
+                    image: 'https://randomuser.me/api/portraits/men/2.jpg',
+                    bio: 'Photography enthusiast',
+                    isFollowing: true,
+                    followers: 850,
+                    following: 120,
+                    posts: [
+                        {postImage: 'https://picsum.photos/id/20/500/500'},
+                        {postImage: 'https://picsum.photos/id/21/500/500'}
+                    ]
+                },
+                {
+                    id: 3,
+                    username: 'gareebpanda',
+                    name: 'Virat Raghav',
+                    image: 'https://randomuser.me/api/portraits/men/3.jpg',
+                    bio: '311K followers',
+                    isFollowing: false,
+                    followers: 311000,
+                    following: 42,
+                    posts: [
+                        {postImage: 'https://picsum.photos/id/30/500/500'},
+                        {postImage: 'https://picsum.photos/id/31/500/500'},
+                        {postImage: 'https://picsum.photos/id/32/500/500'},
+                        {postImage: 'https://picsum.photos/id/33/500/500'},
+                        {postImage: 'https://picsum.photos/id/34/500/500'}
+                    ]
+                },
+                {
+                    id: 4,
+                    username: 'nishu_deshwal_jaat',
+                    name: 'Nishu Deshwal',
+                    image: 'https://randomuser.me/api/portraits/women/1.jpg',
+                    bio: 'Fitness trainer',
+                    isFollowing: false,
+                    followers: 4500,
+                    following: 210,
+                    posts: []
+                },
+                {
+                    id: 5,
+                    username: 'skillyards',
+                    name: 'Skillyards',
+                    image: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+                    bio: 'Learning and growing',
+                    isFollowing: false,
+                    followers: 10000,
+                    following: 150,
+                    posts: [
+                        {postImage: 'https://picsum.photos/id/50/500/500'}
+                    ]
+                }
+            ];
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+    }
+
+    // Toggle search sidebar
+    function toggleSearch() {
+        const mainSidebar = document.querySelector('.w-1\\/4.bg-white');
+        const searchSidebar = document.getElementById('searchSidebar');
+        
+        if (searchSidebar.classList.contains('hidden')) {
+            mainSidebar.classList.add('hidden');
+            searchSidebar.classList.remove('hidden');
+            document.getElementById('searchInput').focus();
+            searchUsers(); // Load initial search results
+        } else {
+            searchSidebar.classList.add('hidden');
+            mainSidebar.classList.remove('hidden');
+        }
+    }
+
+    // Search users function
+    function searchUsers() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const searchResults = document.getElementById('searchResults');
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        
+        searchResults.innerHTML = '';
+        
+        // Create header for recent searches
+        const recentHeader = document.createElement('div');
+        recentHeader.classList.add('flex', 'justify-between', 'items-center', 'px-2', 'py-3');
+        recentHeader.innerHTML = `
+            <span class="font-semibold">Recent</span>
+            <button class="text-blue-500 text-sm font-semibold" onclick="clearRecentSearches()">Clear all</button>
+        `;
+        searchResults.appendChild(recentHeader);
+        
+        if (searchTerm.trim() === '') {
+            // Show recent searches (first 5 users)
+            users.slice(0, 5).forEach(user => {
+                addUserToSearchResults(user, searchResults);
+            });
+            return;
+        }
+        
+        const filteredUsers = users.filter(user => 
+            user.id.toString() === searchTerm || // Search by ID
+            user.username.toLowerCase().includes(searchTerm) || 
+            user.name.toLowerCase().includes(searchTerm)
+        );
+        
+        if (filteredUsers.length === 0) {
+            searchResults.innerHTML = '<p class="text-gray-500 text-center py-4">No users found</p>';
+        } else {
+            filteredUsers.forEach(user => {
+                addUserToSearchResults(user, searchResults);
+            });
+        }
+    }
+
+    // Add user to search results
+    function addUserToSearchResults(user, container) {
+        const userDiv = document.createElement('div');
+        userDiv.classList.add('flex', 'items-center', 'p-2', 'rounded-lg', 'hover:bg-gray-100', 'cursor-pointer');
+        userDiv.onclick = () => openProfile(user);
+        
+        userDiv.innerHTML = `
+            <img src="${user.image}" alt="${user.name}" class="w-10 h-10 rounded-full object-cover mr-3">
+            <div class="flex-1">
+                <p class="font-semibold">${user.username}</p>
+                <p class="text-gray-600 text-sm">
+                    ${user.name} • ${user.posts ? user.posts.length : 0} posts • ${user.followers >= 1000 ? `${(user.followers/1000).toFixed(0)}K` : user.followers} followers
+                </p>
+            </div>
+            ${user.isFollowing ? '<i class="fas fa-check-circle text-blue-500"></i>' : ''}
+        `;
+        
+        container.appendChild(userDiv);
+    }
+
+    let currentProfileUser = null;
+
+    // Open user profile
+    function openProfile(user) {
+        currentProfileUser = user;
+        const profileModal = document.getElementById('profileModal');
+        document.getElementById('profileUsername').textContent = user.username;
+        document.getElementById('profileName').textContent = user.name;
+        document.getElementById('profileImage').src = user.image;
+        document.getElementById('profileBio').textContent = user.bio;
+        document.getElementById('profilePostsCount').textContent = user.posts ? user.posts.length : 0;
+        document.getElementById('profileFollowers').textContent = user.followers || 0;
+        document.getElementById('profileFollowing').textContent = user.following || 0;
+        
+        // Update follow button
+        const followButton = document.getElementById('followButton');
+        if (user.isFollowing) {
+            followButton.textContent = 'Following';
+            followButton.className = 'ml-4 px-4 py-1 rounded-lg font-semibold text-sm bg-gray-200 text-black';
+        } else {
+            followButton.textContent = 'Follow';
+            followButton.className = 'ml-4 px-4 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white';
+        }
+        
+        // Load user posts
+        const profilePostsGrid = document.getElementById('profilePostsGrid');
+        const noPostsMessage = document.getElementById('noPostsMessage');
+        profilePostsGrid.innerHTML = '';
+        
+        if (user.posts && user.posts.length > 0) {
+            noPostsMessage.classList.add('hidden');
+            user.posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.classList.add('aspect-square', 'bg-gray-200', 'relative');
+                postDiv.innerHTML = `
+                    <img src="${post.postImage}" alt="Post" class="w-full h-full object-cover">
+                    ${post.likes ? `<div class="absolute bottom-1 left-1 text-white flex items-center">
+                        <i class="fas fa-heart mr-1"></i>
+                        <span class="text-xs">${post.likes}</span>
+                    </div>` : ''}
+                `;
+                profilePostsGrid.appendChild(postDiv);
+            });
+        } else {
+            noPostsMessage.classList.remove('hidden');
+        }
+        
+        profileModal.classList.remove('hidden');
+    }
+
+    // Toggle follow status
+    function toggleFollow() {
+        if (!currentProfileUser) return;
+        
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const userIndex = users.findIndex(u => u.id === currentProfileUser.id);
+        
+        if (userIndex !== -1) {
+            // Toggle follow status
+            users[userIndex].isFollowing = !users[userIndex].isFollowing;
+            
+            // Update followers count
+            if (users[userIndex].isFollowing) {
+                users[userIndex].followers = (users[userIndex].followers || 0) + 1;
+            } else {
+                users[userIndex].followers = Math.max(0, (users[userIndex].followers || 0) - 1);
+            }
+            
+            localStorage.setItem('users', JSON.stringify(users));
+            currentProfileUser = users[userIndex];
+            openProfile(currentProfileUser); // Refresh profile view
+            
+            // Also update search results if search is open
+            if (!document.getElementById('searchSidebar').classList.contains('hidden')) {
+                searchUsers();
+            }
+        }
+    }
+
+    // Close profile modal
+    function closeProfile() {
+        document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    // Clear recent searches
+    function clearRecentSearches() {
+        const searchResults = document.getElementById('searchResults');
+        searchResults.innerHTML = '<p class="text-gray-500 text-center py-4">No recent searches</p>';
+    }
+
+    // Function to upload an image
+    function uploadImage(event) {
+        const file = event.target.files[0]; // Get the selected file
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const postImageURL = e.target.result; // Get the Base64 URL of the image
+
+                // Create a new post object
+                const newPost = {
+                    user: "You",
+                    userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+                    postImage: postImageURL,
+                    likes: 0, // Initialize like count
+                    comments: "Be the first to comment"
+                };
+
+                // Save the new post to localStorage
+                savePostToLocalStorage(newPost);
+
+                // Add the new post to the UI
+                addPostToUI(newPost);
+            };
+            reader.readAsDataURL(file); // Read the image file
+        }
+    }
+
+    // Function to save a post to localStorage
+    function savePostToLocalStorage(post) {
+        let posts = JSON.parse(localStorage.getItem("posts")) || []; // Get existing posts
+        posts.unshift(post); // Add the new post to the beginning of the array
+        localStorage.setItem("posts", JSON.stringify(posts)); // Save back to localStorage
+    }
+
+    // Function to load posts from localStorage
+    function loadStoredPosts() {
+        const posts = JSON.parse(localStorage.getItem("posts")) || []; // Get posts from localStorage
+        const postsContainer = document.getElementById("postsContainer");
+
+        postsContainer.innerHTML = ""; // Clear existing posts
+
+        // Add each post to the UI
+        posts.forEach(post => {
+            addPostToUI(post);
+        });
+    }
+
+    // Function to add a post to the UI
+    function addPostToUI(post) {
+        const postsContainer = document.getElementById("postsContainer");
+
+        const newPostDiv = document.createElement("div");
+        newPostDiv.classList.add("bg-white", "border", "border-gray-300", "rounded-lg", "mb-6");
+
+        newPostDiv.innerHTML = `
+            <div class="flex items-center p-4 border-b border-gray-300">
+                <img src="${post.userImage}" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                <p class="font-semibold">${post.user}</p>
+            </div>
+            <img src="${post.postImage}" alt="Uploaded Post" class="w-full object-cover cursor-pointer">
+            <div class="flex space-x-4 p-4">
+                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-heart"></i></button>
+                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-comment"></i></button>
+                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125"><i class="far fa-paper-plane"></i></button>
+                <button class="text-2xl cursor-pointer transition-transform transform hover:scale-125 ml-auto"><i class="far fa-bookmark"></i></button>
+            </div>
+            <p class="px-4 text-sm font-semibold like-count">${post.likes} likes</p>
+            <p class="px-4 text-sm text-gray-400">${post.comments}</p>
+        `;
+
+        // Add double-click event listener to the post image
+        const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
+        postImage.addEventListener('dblclick', () => handleDoubleClick(post, newPostDiv));
+
+        // Add click event listener to the like button
+        const likeButton = newPostDiv.querySelector('.fa-heart');
+        likeButton.addEventListener('click', () => handleLikeClick(post, newPostDiv));
+
+        postsContainer.prepend(newPostDiv); // Add the new post to the top of the container
+    }
+
+    // Function to handle like button click
+    function handleLikeClick(post, postDiv) {
+        const likeButton = postDiv.querySelector('.fa-heart');
+        const likeCountElement = postDiv.querySelector('.like-count');
+
+        // Toggle the like state
+        if (likeButton.classList.contains('far')) {
+            likeButton.classList.remove('far');
+            likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
+            post.likes += 1; // Increment like count
+        } else {
+            likeButton.classList.remove('fas', 'text-red-500');
+            likeButton.classList.add('far'); // Change back to outline heart
+            post.likes -= 1; // Decrement like count
+        }
+
+        // Update the like count in the UI
+        likeCountElement.textContent = `${post.likes} likes`;
+
+        // Update the post in localStorage
+        updatePostInLocalStorage(post);
+    }
+
+    // Function to handle double-click on post image
+    function handleDoubleClick(post, postDiv) {
+        const likeButton = postDiv.querySelector('.fa-heart');
+        const likeCountElement = postDiv.querySelector('.like-count');
+
+        // Trigger like action
+        if (likeButton.classList.contains('far')) {
+            likeButton.classList.remove('far');
+            likeButton.classList.add('fas', 'text-red-500'); // Change to solid heart and red color
+            post.likes += 1; // Increment like count
+        }
+
+        // Update the like count in the UI
+        likeCountElement.textContent = `${post.likes} likes`;
+
+        // Update the post in localStorage
+        updatePostInLocalStorage(post);
+    }
+
+    // Function to update a post in localStorage
+    function updatePostInLocalStorage(updatedPost) {
+        let posts = JSON.parse(localStorage.getItem("posts")) || [];
+        const index = posts.findIndex(post => post.postImage === updatedPost.postImage);
+        if (index !== -1) {
+            posts[index] = updatedPost;
+            localStorage.setItem("posts", JSON.stringify(posts));
+        }
+    }
+
+    // Function to load stories
+    function loadStories() {
+        const friendsData = [
+            { name: "Your story", image: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg" },
+            { name: "Friend 2", image: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" },
+            { name: "Friend 3", image: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg" },
+            { name: "Friend 4", image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg" },
+            { name: "Friend 5", image: "https://images.pexels.com/photos/61120/pexels-photo-61120.jpeg" }
+        ];
+
+        // Save friends' data to localStorage
+        localStorage.setItem("friends", JSON.stringify(friendsData));
+
+        // Retrieve and display the friends' stories dynamically
+        const friends = JSON.parse(localStorage.getItem("friends"));
+        const storiesContainer = document.getElementById("storiesContainer");
+
+        friends.forEach((friend, index) => {
+            const storyDiv = document.createElement("div");
+            storyDiv.classList.add("relative", "flex", "flex-col", "items-center", "cursor-pointer");
+            storyDiv.innerHTML = `
+                <video id="story${index}" class="w-16 h-16 rounded-full border-2 border-pink-500 object-cover" style="display:none;">
+                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <img src="${friend.image}" alt="Story" class="w-16 h-16 rounded-full border-2 border-pink-500 object-cover" onclick="openStory('story${index}')">
+            `;
+
+            // Add Plus Icon beside the first story
+            if (index === 0) {
+                const plusIconDiv = document.createElement("div");
+                plusIconDiv.classList.add("absolute", "right-0", "bottom-0", "mb-2", "mr-2", "text-pink-500", "cursor-pointer");
+                plusIconDiv.innerHTML = `<i class="fas fa-plus-circle text-2xl"></i>`;
+                storyDiv.appendChild(plusIconDiv);
+            }
+
+            storyDiv.innerHTML += `<p class="text-xs mt-1">${friend.name}</p>`;
+
+            storiesContainer.appendChild(storyDiv);
+        });
+    }
+
+    // Story Modal functionality
+    function openStory(storyId) {
+        const storyModal = document.getElementById('storyViewModal');
+        const modalVideo = document.getElementById('modalVideo');
+        const modalImage = document.getElementById('storyViewImage');
+        const storyUser = document.getElementById('storyUser');
+
+        const storyElement = document.getElementById(storyId);
+        if (storyElement.tagName === 'VIDEO') {
+            modalVideo.src = storyElement.querySelector('source').src;
+            modalVideo.style.display = 'block';
+            modalImage.style.display = 'none';
+            modalVideo.play();
+        } else {
+            modalImage.src = storyElement.src;
+            modalImage.style.display = 'block';
+            if (modalVideo) modalVideo.style.display = 'none';
+        }
+
+        storyModal.classList.remove('hidden');
+    }
+
+    function closeStoryViewer() {
+        const storyModal = document.getElementById('storyViewModal');
+        const modalVideo = document.getElementById('modalVideo');
+        const modalImage = document.getElementById('storyViewImage');
+
+        if (modalVideo) {
+            modalVideo.pause();
+            modalVideo.currentTime = 0;
+            modalVideo.style.display = 'none';
+        }
+        modalImage.style.display = 'none';
+        storyModal.classList.add('hidden');
+    }
+
+    function closeStoryUploadModal() {
+        document.getElementById('storyUploadModal').classList.add('hidden');
+    }
+
+
+    // ................
+
+    
+</script>
+
 </body>
 </html>

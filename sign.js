@@ -1,26 +1,33 @@
 document.getElementById("loginForm").addEventListener("submit", function(event) {
-    event.preventDefault(); 
+    event.preventDefault();
     
     let username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
     
-    let storedUsername = localStorage.getItem("username");
-    let storedPassword = localStorage.getItem("password");
+    // Get existing users or initialize empty array
+    let users = JSON.parse(localStorage.getItem("users")) || [];
     
-
-    if (storedUsername && storedPassword) {
-        // Agar pehle se credentials stored hain, toh match karein
-        if (username === storedUsername && password === storedPassword) {
-            // alert("Login Successful!");
-            window.location.href = "index.html"; // Redirect after login
-        } else {
-            alert("Invalid Credentials! Please try again.");
-        }
+    // Check if user exists
+    const existingUser = users.find(user => 
+        user.username === username && user.password === password
+    );
+    
+    if (existingUser) {
+        // User exists and credentials match
+        alert("Login Successful!");
+        window.location.href = "index.html";
     } else {
-        // Agar pehli baar login ho raha hai, toh credentials store karein
-        localStorage.setItem("username", username);
-        localStorage.setItem("password", password);
-        alert("Account Created & Login Successful!");
-        window.location.href = "dashboard.html";
+        // Check if username exists but password is wrong
+        const usernameExists = users.some(user => user.username === username);
+        
+        if (usernameExists) {
+            alert("Invalid Password! Please try again.");
+        } else {
+            // New user - add to storage
+            users.push({ username, password });
+            localStorage.setItem("users", JSON.stringify(users));
+            alert("Account Created & Login Successful!");
+            window.location.href = "dashboard.html";
+        }
     }
 });
