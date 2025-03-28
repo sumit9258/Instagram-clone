@@ -2,7 +2,6 @@
 
 // Function to render existing comments
 function renderExistingComments(post) {
-    // Check if the post has comments stored
     const storedComments = post.storedComments || [];
     
     if (storedComments.length === 0) {
@@ -33,7 +32,6 @@ function renderExistingComments(post) {
 
 // Function to add a comment modal to a post
 function addCommentModal(post, postDiv) {
-    // Create comment modal container
     const commentModal = document.createElement('div');
     commentModal.classList.add('fixed', 'inset-0', 'bg-black', 'bg-opacity-50', 'flex', 'items-center', 'justify-center', 'z-50');
     
@@ -65,56 +63,42 @@ function addCommentModal(post, postDiv) {
         </div>
     `;
 
-    // Append modal to body
     document.body.appendChild(commentModal);
 }
 
-// Function to close comment modal
 function closeCommentModal(closeButton) {
     const modal = closeButton.closest('.fixed');
     modal.remove();
 }
 
-// Function to submit a comment
 function submitComment(postButton, postImageKey) {
     const commentInput = postButton.previousElementSibling;
     const commentText = commentInput.value.trim();
     
     if (commentText === '') return;
 
-    // Get existing posts from localStorage
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
-    
-    // Find the specific post
     const postIndex = posts.findIndex(post => post.postImage === postImageKey);
     
     if (postIndex !== -1) {
-        // Create comment object
         const newComment = {
             username: localStorage.getItem("username") || "You",
             text: commentText,
             timestamp: new Date().toLocaleString()
         };
 
-        // Initialize storedComments if not exists
         if (!posts[postIndex].storedComments) {
             posts[postIndex].storedComments = [];
         }
 
-        // Add comment to post
         posts[postIndex].storedComments.push(newComment);
-        
-        // Update comments text in the main post
         posts[postIndex].comments = `${posts[postIndex].storedComments.length} comments`;
 
-        // Save updated posts back to localStorage
         localStorage.setItem("posts", JSON.stringify(posts));
 
-        // Update UI
         const existingCommentsContainer = document.getElementById('existingCommentsContainer');
         existingCommentsContainer.innerHTML = renderExistingComments(posts[postIndex]);
         
-        // Update comments count in the main post view
         const postsContainer = document.getElementById("postsContainer");
         const postElements = postsContainer.querySelectorAll('.comments-count');
         postElements.forEach((element, index) => {
@@ -123,36 +107,25 @@ function submitComment(postButton, postImageKey) {
             }
         });
         
-        // Clear input
         commentInput.value = '';
     }
 }
 
-// Function to delete a comment
 function deleteComment(postImageKey, commentIndex) {
-    // Get existing posts from localStorage
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
-    
-    // Find the specific post
     const postIndex = posts.findIndex(post => post.postImage === postImageKey);
     
     if (postIndex !== -1 && posts[postIndex].storedComments) {
-        // Remove the comment at the specified index
         posts[postIndex].storedComments.splice(commentIndex, 1);
-        
-        // Update comments text in the main post
         posts[postIndex].comments = posts[postIndex].storedComments.length > 0 
             ? `${posts[postIndex].storedComments.length} comments`
             : "Be the first to comment";
 
-        // Save updated posts back to localStorage
         localStorage.setItem("posts", JSON.stringify(posts));
 
-        // Update comments in the modal
         const existingCommentsContainer = document.getElementById('existingCommentsContainer');
         existingCommentsContainer.innerHTML = renderExistingComments(posts[postIndex]);
         
-        // Update comments count in the main post view
         const postsContainer = document.getElementById("postsContainer");
         const postElements = postsContainer.querySelectorAll('.comments-count');
         postElements.forEach((element, index) => {
@@ -163,17 +136,13 @@ function deleteComment(postImageKey, commentIndex) {
     }
 }
 
-// Function to add comment functionality to post
 function enhancePostWithComments(post, newPostDiv) {
-    // Find comment button
     const commentButton = newPostDiv.querySelector('.fa-comment');
-    
     commentButton.addEventListener('click', () => {
         addCommentModal(post, newPostDiv);
     });
 }
 
-// Function to load posts from storage
 function loadStoredPosts() {
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
 
@@ -196,7 +165,6 @@ function loadStoredPosts() {
         }
     ];
 
-    // If no posts in storage, use default posts
     if (posts.length === 0) {
         posts = defaultPosts;
         localStorage.setItem("posts", JSON.stringify(posts));
@@ -206,7 +174,6 @@ function loadStoredPosts() {
     postsContainer.innerHTML = "";
     
     posts.forEach(post => {
-        // Update comments count before adding post
         post.comments = post.storedComments && post.storedComments.length > 0 
             ? `${post.storedComments.length} comments` 
             : "Be the first to comment";
@@ -216,7 +183,6 @@ function loadStoredPosts() {
     });
 }
 
-// Function to add post to UI
 function addPostToUI(post) {
     const postsContainer = document.getElementById("postsContainer");
 
@@ -239,18 +205,14 @@ function addPostToUI(post) {
         <p class="px-4 text-sm text-gray-400 comments-count">${post.comments}</p>
     `;
 
-    // Add double-click event listener to the post image
     const postImage = newPostDiv.querySelector('img[alt="Uploaded Post"]');
     postImage.addEventListener('dblclick', () => {
-        // Find the like button and trigger a click
         const likeButton = newPostDiv.querySelector('.fa-heart');
         likeButton.click();
     });
 
-    // Add click event listener to the like button
     const likeButton = newPostDiv.querySelector('.fa-heart');
     likeButton.addEventListener('click', () => {
-        // Toggle like status
         const isLiked = likeButton.classList.contains('fas');
         
         if (isLiked) {
@@ -265,19 +227,14 @@ function addPostToUI(post) {
             post.likes++;
         }
         
-        // Update like count display
         newPostDiv.querySelector('.like-count').textContent = `${post.likes} likes`;
-        
-        // Update in localStorage
         updatePostInStorage(post);
     });
 
     postsContainer.prepend(newPostDiv);
-    
     return newPostDiv;
 }
 
-// Function to update post in localStorage
 function updatePostInStorage(updatedPost) {
     let posts = JSON.parse(localStorage.getItem("posts")) || [];
     const postIndex = posts.findIndex(p => p.postImage === updatedPost.postImage);
@@ -288,7 +245,9 @@ function updatePostInStorage(updatedPost) {
     }
 }
 
-// Function to upload image
+
+
+
 function uploadImage(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -296,10 +255,12 @@ function uploadImage(event) {
     const reader = new FileReader();
     reader.onload = function (e) {
         const posts = JSON.parse(localStorage.getItem("posts")) || [];
+        const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
         
         const newPost = {
-            user: localStorage.getItem("username") || "You",
-            userImage: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg", // Default user image
+            user: currentUser.username || "You",
+            userImage: localStorage.getItem(`${currentUser.username}_profileImage`) || 
+                      "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
             postImage: e.target.result,
             likes: 0,
             comments: "Be the first to comment",
@@ -311,9 +272,13 @@ function uploadImage(event) {
 
         const newPostDiv = addPostToUI(newPost);
         enhancePostWithComments(newPost, newPostDiv);
+        
+        // Update profile page if we're on it
+        if (document.getElementById("profilePostsContainer")) {
+            loadProfilePosts();
+        }
     };
     reader.readAsDataURL(file);
 }
 
-// Initialize when DOM is loaded
 document.addEventListener("DOMContentLoaded", loadStoredPosts);

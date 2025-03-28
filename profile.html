@@ -151,50 +151,33 @@
     <script>
         // Function to initialize a clean profile for new users
         function initializeNewUserProfile(username) {
-            // Clear any existing profile data
             localStorage.removeItem(`${username}_profileImage`);
-            
-            // Set default values
             document.getElementById("profileUsername").textContent = username;
             document.getElementById("postCount").textContent = "0";
             document.getElementById("profileBio").textContent = "No bio yet";
-            
-            // Ensure empty profile image is shown
             document.getElementById("emptyProfileImg").classList.remove("hidden");
             document.getElementById("profileImage").classList.add("hidden");
-            
-            // Hide highlights section for new users
             document.getElementById("highlightsSection").classList.add("hidden");
-            
-            // Clear any posts (in case they exist)
             document.getElementById("profilePostsContainer").innerHTML = 
                 "<p class='text-gray-500 text-center col-span-3'>No posts yet. Create your first post!</p>";
         }
 
         // Function to load profile data
         function loadProfileData() {
-            // Get current user from localStorage
             const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
             const username = currentUser.username || "Guest";
-            
-            // Check if this is a new user (no profile image saved)
             const isNewUser = !localStorage.getItem(`${username}_profileImage`);
             
             if (isNewUser) {
                 initializeNewUserProfile(username);
             } else {
-                // Existing user - load their data
                 document.getElementById("profileUsername").textContent = username;
-                
-                // Load profile image
                 const profileImage = localStorage.getItem(`${username}_profileImage`);
                 if (profileImage) {
                     document.getElementById("emptyProfileImg").classList.add("hidden");
                     document.getElementById("profileImage").classList.remove("hidden");
                     document.getElementById("profileImage").src = profileImage;
                 }
-                
-                // Load user posts
                 loadProfilePosts();
             }
         }
@@ -221,7 +204,7 @@
             }
 
             postsContainer.innerHTML = "";
-            userPosts.forEach(post => {
+            userPosts.forEach(post => { 
                 addPostToUI(post, postsContainer);
             });
         }
@@ -231,18 +214,24 @@
             if (!post.postImage) return;
 
             const postElement = document.createElement("div");
-            postElement.classList.add("relative", "group");
+            postElement.classList.add("relative", "group", "bg-white", "border", "border-gray-300", "rounded-lg", "mb-6");
 
             postElement.innerHTML = `
-                <div class="aspect-square overflow-hidden rounded-md bg-gray-100">
-                    <img src="${post.postImage}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Post">
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <div class="flex space-x-6 text-white">
-                            <span><i class="fas fa-heart"></i> ${post.likes || 0}</span>
-                            <span><i class="fas fa-comment"></i> ${post.comments ? post.comments.split(',').length : 0}</span>
-                        </div>
-                    </div>
+                <div class="flex items-center p-4 border-b border-gray-300">
+                    <img src="${post.userImage || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'}" 
+                         alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                    <p class="font-semibold">${post.user}</p>
                 </div>
+                <div class="aspect-square overflow-hidden">
+                    <img src="${post.postImage}" class="w-full h-full object-cover" alt="Post">
+                </div>
+                <div class="flex space-x-4 p-4">
+                    <button class="text-2xl cursor-pointer"><i class="far fa-heart"></i></button>
+                    <button class="text-2xl cursor-pointer"><i class="far fa-comment"></i></button>
+                    <button class="text-2xl cursor-pointer"><i class="far fa-paper-plane"></i></button>
+                </div>
+                <p class="px-4 text-sm font-semibold">${post.likes || 0} likes</p>
+                <p class="px-4 text-sm text-gray-400">${post.comments || "Be the first to comment"}</p>
             `;
 
             container.appendChild(postElement);
@@ -254,19 +243,15 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Hide empty profile and show image
                     document.getElementById("emptyProfileImg").classList.add("hidden");
                     const profileImage = document.getElementById("profileImage");
                     profileImage.classList.remove("hidden");
                     profileImage.src = e.target.result;
                     
-                    // Save to localStorage
                     const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
                     const username = currentUser.username;
                     if (username) {
                         localStorage.setItem(`${username}_profileImage`, e.target.result);
-                        
-                        // Show highlights section now that user has a profile
                         document.getElementById("highlightsSection").classList.remove("hidden");
                     }
                 };
@@ -276,7 +261,33 @@
 
         // Function to upload post image
         function uploadImage(event) {
-            console.log("Image upload functionality to be implemented");
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const posts = JSON.parse(localStorage.getItem("posts")) || [];
+                const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
+                
+                const newPost = {
+                    user: currentUser.username || "You",
+                    userImage: localStorage.getItem(`${currentUser.username}_profileImage`) || 
+                              "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg",
+                    postImage: e.target.result,
+                    likes: 0,
+                    comments: "Be the first to comment",
+                    storedComments: []
+                };
+
+                posts.push(newPost);
+                localStorage.setItem("posts", JSON.stringify(posts));
+
+                // Update profile page if we're on it
+                if (document.getElementById("profilePostsContainer")) {
+                    loadProfilePosts();
+                }
+            };
+            reader.readAsDataURL(file);
         }
 
         // Load profile data when DOM is loaded
