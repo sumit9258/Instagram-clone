@@ -26,6 +26,35 @@
                 width: 100%;
             }
         }
+        #profileImageInput {
+            display: none;
+        }
+        .profile-img-container {
+            position: relative;
+            cursor: pointer;
+            width: 132px;
+            height: 132px;
+        }
+        .profile-img-container:hover::after {
+            content: 'Add Photo';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            border-radius: 0 0 50% 50%;
+        }
+        .empty-profile-img {
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 40px;
+        }
     </style>
 </head>
 
@@ -69,37 +98,34 @@
         <div class="content p-8">
             <!-- Profile Header -->
             <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-16">
-                <img src="assets/360_F_182344447_cBOWy2b9uLQZPlR7subUd7qC8u6cKipn.jpg" alt="Profile"
-                    class="w-32 h-32 rounded-full border-2 border-gray-500">
+                <div class="profile-img-container rounded-full border-2 border-gray-500 overflow-hidden" 
+                     onclick="document.getElementById('profileImageInput').click()">
+                    <div id="emptyProfileImg" class="empty-profile-img w-full h-full">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <img id="profileImage" src="" alt="Profile" class="w-full h-full object-cover hidden">
+                    <input type="file" id="profileImageInput" accept="image/*" onchange="updateProfileImage(event)">
+                </div>
                 <div class="flex-1">
                     <div class="flex flex-col md:flex-row md:items-center md:space-x-8 mb-4">
-                        <h2 id="profileUsername" class="text-2xl font-bold">devil_anuj_thakur_02</h2>
+                        <h2 id="profileUsername" class="text-2xl font-bold">username</h2>
                         <div class="flex space-x-4 mt-2 md:mt-0">
                             <button class="bg-gray-200 text-black px-4 py-1 rounded-md text-sm">Edit Profile</button>
                             <button class="bg-gray-200 text-black px-4 py-1 rounded-md text-sm">View Archive</button>
                         </div>
                     </div>
                     <div class="flex space-x-8 mb-4">
-                        <p class="text-md"><span class="font-semibold">4</span> posts</p>
-                        <p class="text-md"><span class="font-semibold">202</span> followers</p>
-                        <p class="text-md"><span class="font-semibold">126</span> following</p>
+                        <p class="text-md"><span id="postCount" class="font-semibold">0</span> posts</p>
+                        <p class="text-md"><span class="font-semibold">0</span> followers</p>
+                        <p class="text-md"><span class="font-semibold">0</span> following</p>
                     </div>
-                    <p class="text-md">🔥 thakur anuj jadon 🔥 😈<br>Full stack web developer</p>
+                    <p id="profileBio" class="text-md">No bio yet</p>
                 </div>
             </div>
 
-            <!-- Highlights -->
-            <div class="flex space-x-6 mt-8 overflow-x-auto py-4">
-                <div class="flex flex-col items-center flex-shrink-0">
-                    <div class="w-20 h-20 rounded-full border-2 border-pink-500"></div>
-                    <p class="text-sm mt-2">Highlights</p>
-                </div>
-                <div class="flex flex-col items-center flex-shrink-0">
-                    <div class="w-20 h-20 rounded-full border-2 border-gray-400 flex items-center justify-center text-3xl">
-                        +
-                    </div>
-                    <p class="text-sm mt-2">New</p>
-                </div>
+            <!-- Highlights - Removed for new users -->
+            <div id="highlightsSection" class="hidden flex space-x-6 mt-8 overflow-x-auto py-4">
+                <!-- Highlights will be shown only after user adds them -->
             </div>
 
             <!-- Posts Navigation -->
@@ -117,42 +143,84 @@
 
             <!-- Posts Grid -->
             <div id="profilePostsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
-                <!-- Posts will be loaded here dynamically -->
+                <p class="text-gray-500 text-center col-span-3">No posts yet. Create your first post!</p>
             </div>
         </div>
     </div>
 
     <script>
+        // Function to initialize a clean profile for new users
+        function initializeNewUserProfile(username) {
+            // Clear any existing profile data
+            localStorage.removeItem(`${username}_profileImage`);
+            
+            // Set default values
+            document.getElementById("profileUsername").textContent = username;
+            document.getElementById("postCount").textContent = "0";
+            document.getElementById("profileBio").textContent = "No bio yet";
+            
+            // Ensure empty profile image is shown
+            document.getElementById("emptyProfileImg").classList.remove("hidden");
+            document.getElementById("profileImage").classList.add("hidden");
+            
+            // Hide highlights section for new users
+            document.getElementById("highlightsSection").classList.add("hidden");
+            
+            // Clear any posts (in case they exist)
+            document.getElementById("profilePostsContainer").innerHTML = 
+                "<p class='text-gray-500 text-center col-span-3'>No posts yet. Create your first post!</p>";
+        }
+
+        // Function to load profile data
+        function loadProfileData() {
+            // Get current user from localStorage
+            const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
+            const username = currentUser.username || "Guest";
+            
+            // Check if this is a new user (no profile image saved)
+            const isNewUser = !localStorage.getItem(`${username}_profileImage`);
+            
+            if (isNewUser) {
+                initializeNewUserProfile(username);
+            } else {
+                // Existing user - load their data
+                document.getElementById("profileUsername").textContent = username;
+                
+                // Load profile image
+                const profileImage = localStorage.getItem(`${username}_profileImage`);
+                if (profileImage) {
+                    document.getElementById("emptyProfileImg").classList.add("hidden");
+                    document.getElementById("profileImage").classList.remove("hidden");
+                    document.getElementById("profileImage").src = profileImage;
+                }
+                
+                // Load user posts
+                loadProfilePosts();
+            }
+        }
+
         // Function to load only user's posts
         function loadProfilePosts() {
-            // Get username from localStorage
-            const username = localStorage.getItem("username");
-            if (username) {
-                document.getElementById("profileUsername").textContent = username;
-            }
+            const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
+            const username = currentUser.username || "Guest";
 
             let allPosts = JSON.parse(localStorage.getItem("posts") || "[]");
-
             let postsContainer = document.getElementById("profilePostsContainer");
-            if (!postsContainer) {
-                console.error("Error: Element with id 'profilePostsContainer' not found.");
-                return;
-            }
-
-            postsContainer.innerHTML = ""; // Clear existing posts
-
-            console.log("All Posts from LocalStorage:", allPosts);
+            
+            if (!postsContainer) return;
 
             // Filter posts where user matches the logged-in username
             let userPosts = allPosts.filter(post => post.user === username || post.user === "You");
 
-            console.log("Filtered User Posts:", userPosts);
+            // Update post count
+            document.getElementById("postCount").textContent = userPosts.length;
 
             if (userPosts.length === 0) {
-                postsContainer.innerHTML = "<p class='text-gray-500 text-center col-span-3'>No posts yet.</p>";
+                postsContainer.innerHTML = "<p class='text-gray-500 text-center col-span-3'>No posts yet. Create your first post!</p>";
                 return;
             }
 
+            postsContainer.innerHTML = "";
             userPosts.forEach(post => {
                 addPostToUI(post, postsContainer);
             });
@@ -160,10 +228,7 @@
 
         // Function to add posts to UI
         function addPostToUI(post, container) {
-            if (!post.postImage) {
-                console.error("Error: postImage is missing in", post);
-                return;
-            }
+            if (!post.postImage) return;
 
             const postElement = document.createElement("div");
             postElement.classList.add("relative", "group");
@@ -183,14 +248,39 @@
             container.appendChild(postElement);
         }
 
-        // Function to upload image (needs to be implemented)
+        // Function to update profile image
+        function updateProfileImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Hide empty profile and show image
+                    document.getElementById("emptyProfileImg").classList.add("hidden");
+                    const profileImage = document.getElementById("profileImage");
+                    profileImage.classList.remove("hidden");
+                    profileImage.src = e.target.result;
+                    
+                    // Save to localStorage
+                    const currentUser = JSON.parse(localStorage.getItem("current_user")) || {};
+                    const username = currentUser.username;
+                    if (username) {
+                        localStorage.setItem(`${username}_profileImage`, e.target.result);
+                        
+                        // Show highlights section now that user has a profile
+                        document.getElementById("highlightsSection").classList.remove("hidden");
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Function to upload post image
         function uploadImage(event) {
-            // Your image upload implementation here
             console.log("Image upload functionality to be implemented");
         }
 
         // Load profile data when DOM is loaded
-        document.addEventListener("DOMContentLoaded", loadProfilePosts);
+        document.addEventListener("DOMContentLoaded", loadProfileData);
     </script>
 </body>
 </html>
